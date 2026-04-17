@@ -23,9 +23,15 @@ if ingredients_list:
     for fruit_chosen in ingredients_list:
         ingredients_string += fruit_chosen + ' '
 
+        # ✅ Add subheader (NEW)
+        st.subheader(fruit_chosen + ' Nutrition Information')
+
+        # ✅ Use fruit_chosen in API (NO hardcoded watermelon)
         smoothiefroot_response = requests.get(
-            f"https://my.smoothiefroot.com/api/fruit/{fruit_chosen.lower()}"
+            "https://my.smoothiefroot.com/api/fruit/" + fruit_chosen
         )
+
+        # ✅ Show dataframe
         sf_df = st.dataframe(
             data=smoothiefroot_response.json(),
             use_container_width=True
