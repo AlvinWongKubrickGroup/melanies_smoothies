@@ -5,25 +5,29 @@ import requests
 st.title(":cup_with_straw: Customize Your Smoothie! :cup_with_straw:")
 st.write("Choose the fruits you want in your custom Smoothie!")
 
+# Name input
 name_on_order = st.text_input("Name on Smoothie:")
 st.write("The name on your Smoothie will be:", name_on_order)
 
+# Snowflake connection
 cnx = st.connection("snowflake")
 session = cnx.session()
 
+# Get fruit list
 my_dataframe = session.table("smoothies.public.fruit_options").select(col("FRUIT_NAME"))
 fruit_rows = my_dataframe.collect()
 fruit_list = [row["FRUIT_NAME"] for row in fruit_rows]
 
+# Multiselect
 ingredients_list = st.multiselect(
     "Choose up to 5 ingredients:",
     fruit_list,
     max_selections=5
 )
 
+# Order logic
 if ingredients_list:
     ingredients_string = " ".join(ingredients_list)
-
     st.write("Your ingredients:", ingredients_string)
 
     if st.button("Submit Order"):
@@ -34,16 +38,32 @@ if ingredients_list:
         session.sql(my_insert_stmt).collect()
         st.success(f"Your Smoothie is ordered, {name_on_order}!", icon="✅")
 
-st.subheader("Fruit Nutrition Check")
+# -------------------------------
+# NEW SECTION: SmoothieFruit API
+# -------------------------------
 
-fruit_choice = st.selectbox("Pick a fruit to learn more about:", fruit_list)
+st.subheader("SmoothieFruit Nutrition Info")
+
+fruit_choice = st.selectbox(
+    "Pick a fruit to get nutrition info:",
+    fruit_list
+)
 
 if st.button("Get Fruit Info"):
-    response = requests.get(
+    smoothiefroot_response = requests.get(
         f"https://my.smoothiefroot.com/api/fruit/{fruit_choice.lower()}"
     )
 
-    if response.status_code == 200:
-        st.write(response.json())
+    if smoothiefroot_response.status_code == 200:
+        
+        # ✅ 1. Show raw JSON
+        st.text(smoothiefroot_response.json())
+
+        # ✅ 2. Show as dataframe
+        st.dataframe(
+            data=smoothiefroot_response.json(),
+            use_container_width=True
+        )
+
     else:
-        st.error("Could not fetch fruit information.")
+        st.error("Failed to fetch data from SmoothieFruit API.")
